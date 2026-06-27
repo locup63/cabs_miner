@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>🪙 CABS Miner</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        /* ===== ТЕМА TELEGRAM ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--tg-theme-bg-color, #0a0f1e);
+            color: var(--tg-theme-text-color, #ffffff);
+            min-height: 100vh;
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .container {
+            max-width: 420px;
+            width: 100%;
+            background: var(--tg-theme-secondary-bg-color, #121828);
+            border-radius: 24px;
+            padding: 24px 20px 32px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        /* ===== ЗАГОЛОВКИ ===== */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #f7b731, #f5a623);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .user-badge {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 6px 14px;
+            border-radius: 40px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--tg-theme-hint-color, #8899bb);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .user-badge .id {
+            color: var(--tg-theme-text-color, #fff);
+            font-weight: 600;
+        }
+
+        /* ===== КАРТОЧКА БАЛАНСА ===== */
+        .balance-card {
+            background: linear-gradient(135deg, #1a2340, #0f1629);
+            border-radius: 20px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(255, 215, 0, 0.15);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .balance-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(247, 183, 49, 0.08), transparent 70%);
+            border-radius: 50%;
+        }
+
+        .balance-label {
+            font-size: 13px;
+            color: var(--tg-theme-hint-color, #8899bb);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 500;
+            position: relative;
+        }
+
+        .balance-amount {
+            font-size: 36px;
+            font-weight: 800;
+            color: #f7b731;
+            margin-top: 4px;
+            position: relative;
+        }
+
+        .balance-amount span {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--tg-theme-hint-color, #8899bb);
+            margin-left: 4px;
+        }
+
+        .balance-sub {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 12px;
+            font-size: 14px;
+            color: var(--tg-theme-hint-color, #8899bb);
+            position: relative;
+        }
+
+        .balance-sub strong {
+            color: var(--tg-theme-text-color, #fff);
+        }
+
+        /* ===== СТАТИСТИКА ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+
+        .stat-item {
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 14px;
+            padding: 14px 10px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .stat-item .number {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--tg-theme-text-color, #fff);
+            display: block;
+        }
+
+        .stat-item .label {
+            font-size: 11px;
+            color: var(--tg-theme-hint-color, #8899bb);
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* ===== КНОПКИ ===== */
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            background: var(--tg-theme-button-color, #5288c1);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            margin-bottom: 10px;
+            text-decoration: none;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+            opacity: 0.8;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #f7b731, #f5a623);
+            color: #0a0f1e;
+            box-shadow: 0 4px 16px rgba(247, 183, 49, 0.25);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--tg-theme-text-color, #fff);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: #fff;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: #fff;
+        }
+
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .btn-group .btn {
+            margin-bottom: 0;
+        }
+
+        /* ===== РЕСУРСЫ ===== */
+        .resources-section {
+            margin: 20px 0;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .resources-section .title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--tg-theme-hint-color, #8899bb);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .resource-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .resource-item:last-child {
+            border-bottom: none;
+        }
+
+        .resource-item .name {
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .resource-item .count {
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        /* ===== РЫБАЛКА ===== */
+        .fish-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            margin: 12px 0 16px;
+        }
+
+        .fish-item {
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 12px;
+            padding: 10px 6px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            font-size: 13px;
+        }
+
+        .fish-item .emoji {
+            font-size: 28px;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .fish-item .price {
+            color: var(--tg-theme-hint-color, #8899bb);
+            font-size: 11px;
+        }
+
+        /* ===== ТАБЫ ===== */
+        .tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 6px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 6px;
+            text-align: center;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--tg-theme-hint-color, #8899bb);
+            border: 1px solid transparent;
+            transition: all 0.15s;
+        }
+
+        .tab.active {
+            background: rgba(247, 183, 49, 0.15);
+            color: #f7b731;
+            border-color: rgba(247, 183, 49, 0.25);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* ===== АДАПТИВ ===== */
+        @media (max-width: 400px) {
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .btn-group {
+                grid-template-columns: 1fr;
+            }
+            .fish-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .container {
+                padding: 16px 14px 24px;
+            }
+        }
+
+        /* ===== ПРОЧЕЕ ===== */
+        .text-muted {
+            color: var(--tg-theme-hint-color, #8899bb);
+            font-size: 13px;
+        }
+
+        .divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.06);
+            margin: 16px 0;
+        }
+
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .mt-8 { margin-top: 8px; }
+        .mt-12 { margin-top: 12px; }
+        .mt-16 { margin-top: 16px; }
+        .mb-8 { margin-bottom: 8px; }
+        .mb-12 { margin-bottom: 12px; }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 500;
+            backdrop-filter: blur(12px);
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            max-width: 90%;
+            text-align: center;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container" id="app">
+        <!-- ===== ШАПКА ===== -->
+        <div class="header">
+            <h1>🪙 CABS Miner</h1>
+            <div class="user-badge">
+                👤 <span class="id" id="userId">—</span>
+            </div>
+        </div>
+
+        <!-- ===== БАЛАНС ===== -->
+        <div class="balance-card">
+            <div class="balance-label">💰 Баланс</div>
+            <div class="balance-amount">
+                <span id="balance">0</span><span>CABS</span>
+            </div>
+            <div class="balance-sub">
+                <span>📤 Выведено: <strong id="withdrawn">0</strong></span>
+                <span>🎣 Рыбы: <strong id="fishCount">0</strong></span>
+            </div>
+        </div>
+
+        <!-- ===== СТАТИСТИКА ===== -->
+        <div class="stats-grid">
+            <div class="stat-item">
+                <span class="number" id="miningStat">0</span>
+                <span class="label">⛏ Майнинг</span>
+            </div>
+            <div class="stat-item">
+                <span class="number" id="refsStat">0</span>
+                <span class="label">👥 Рефералы</span>
+            </div>
+            <div class="stat-item">
+                <span class="number" id="eloStat">0</span>
+                <span class="label">🏆 ELO</span>
+            </div>
+        </div>
+
+        <!-- ===== ТАБЫ ===== -->
+        <div class="tabs">
+            <div class="tab active" data-tab="tabMining">💎 Майнинг</div>
+            <div class="tab" data-tab="tabFishing">🎣 Рыбалка</div>
+            <div class="tab" data-tab="tabRefs">👥 Рефералы</div>
+        </div>
+
+        <!-- ===== ВКЛАДКА: МАЙНИНГ ===== -->
+        <div class="tab-content active" id="tabMining">
+            <div id="miningStatus">
+                <div class="flex-between">
+                    <span class="text-muted">⏱ Статус:</span>
+                    <span id="miningState" style="font-weight:600; color:#e74c3c;">❌ Остановлен</span>
+                </div>
+                <div class="flex-between mt-8">
+                    <span class="text-muted">⚡ Скорость:</span>
+                    <span id="miningSpeed">135 CABS/час</span>
+                </div>
+                <div class="flex-between mt-8">
+                    <span class="text-muted">⏱ Прошло:</span>
+                    <span id="miningTime">0ч 0м</span>
+                </div>
+                <div class="flex-between mt-8">
+                    <span class="text-muted">💰 Намайнено:</span>
+                    <span id="miningEarned">0.00 CABS</span>
+                </div>
+            </div>
+
+            <div class="btn-group mt-16">
+                <button class="btn btn-success" id="miningStartBtn">▶️ Запустить</button>
+                <button class="btn btn-danger" id="miningStopBtn">⏹ Остановить</button>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="resources-section">
+                <div class="title">📦 Твои ресурсы</div>
+                <div class="resource-item">
+                    <span class="name">🪨 Железо</span>
+                    <span class="count" id="resIron">0</span>
+                </div>
+                <div class="resource-item">
+                    <span class="name">🥇 Золото</span>
+                    <span class="count" id="resGold">0</span>
+                </div>
+                <div class="resource-item">
+                    <span class="name">💎 Алмазы</span>
+                    <span class="count" id="resDiamond">0</span>
+                </div>
+                <div class="resource-item">
+                    <span class="name">✨ Материя</span>
+                    <span class="count" id="resMatter">0</span>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-secondary" id="mineIronBtn">🪨 Копать железо</button>
+                <button class="btn btn-secondary" id="mineGoldBtn">🥇 Копать золото</button>
+                <button class="btn btn-secondary" id="mineDiamondBtn">💎 Копать алмазы</button>
+                <button class="btn btn-secondary" id="mineMatterBtn">✨ Копать материю</button>
+            </div>
+        </div>
+
+        <!-- ===== ВКЛАДКА: РЫБАЛКА ===== -->
+        <div class="tab-content" id="tabFishing">
+            <div class="flex-between">
+                <span class="text-muted">🎣 Кулдаун:</span>
+                <span id="fishingCooldown">90 мин</span>
+            </div>
+            <div class="flex-between mt-8">
+                <span class="text-muted">⏳ До следующей:</span>
+                <span id="fishingNext">Готово!</span>
+            </div>
+
+            <button class="btn btn-primary mt-16" id="fishCastBtn">🎣 Забросить удочку</button>
+
+            <div class="divider"></div>
+
+            <div class="resources-section">
+                <div class="title">📦 Мой улов</div>
+                <div class="fish-grid" id="fishInventory">
+                    <div class="fish-item"><span class="emoji">🐟</span>Окунь <span class="price" id="fishPerch">0</span></div>
+                    <div class="fish-item"><span class="emoji">🐠</span>Форель <span class="price" id="fishTrout">0</span></div>
+                    <div class="fish-item"><span class="emoji">🐡</span>Фугу <span class="price" id="fishFugu">0</span></div>
+                    <div class="fish-item"><span class="emoji">🐟</span>Лосось <span class="price" id="fishSalmon">0</span></div>
+                    <div class="fish-item"><span class="emoji">🦈</span>Акула <span class="price" id="fishShark">0</span></div>
+                    <div class="fish-item"><span class="emoji">🐋</span>Кит <span class="price" id="fishWhale">0</span></div>
+                </div>
+                <button class="btn btn-secondary mt-12" id="sellFishBtn">💸 Продать всю рыбу</button>
+            </div>
+        </div>
+
+        <!-- ===== ВКЛАДКА: РЕФЕРАЛЫ ===== -->
+        <div class="tab-content" id="tabRefs">
+            <div class="flex-between">
+                <span class="text-muted">👥 Рефералов:</span>
+                <span id="refsTotal">0</span>
+            </div>
+            <div class="flex-between mt-8">
+                <span class="text-muted">💰 Заработано:</span>
+                <span id="refsEarned">0 CABS</span>
+            </div>
+            <div class="flex-between mt-8">
+                <span class="text-muted">💵 За реферала:</span>
+                <span id="refsReward">1000 CABS</span>
+            </div>
+            <div class="flex-between mt-8">
+                <span class="text-muted">💵 % от заработка:</span>
+                <span id="refsPercent">20%</span>
+            </div>
+
+            <div class="resources-section mt-16">
+                <div class="title">🔗 Твоя ссылка</div>
+                <div style="background:rgba(255,255,255,0.04); padding:12px; border-radius:10px; word-break:break-all; font-size:13px; font-family:monospace;" id="refLink">Загрузка...</div>
+                <button class="btn btn-secondary mt-8" id="copyRefBtn">📋 Скопировать ссылку</button>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="resources-section">
+                <div class="title">👥 Мои рефералы</div>
+                <div id="refsList" style="font-size:14px; color:var(--tg-theme-hint-color, #8899bb);">
+                    У вас пока нет рефералов
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== НИЖНИЕ КНОПКИ ===== -->
+        <div class="divider"></div>
+
+        <div class="btn-group">
+            <button class="btn btn-secondary" id="refreshBtn">🔄 Обновить</button>
+            <button class="btn btn-danger" id="closeBtn" style="background:rgba(255,255,255,0.06); color:var(--tg-theme-text-color, #fff); border:1px solid rgba(255,255,255,0.1);">✕ Закрыть</button>
+        </div>
+
+        <div style="text-align:center; margin-top:16px; font-size:11px; color:var(--tg-theme-hint-color, #556688);">
+            v2.0 • CABS Miner
+        </div>
+    </div>
+
+    <!-- ===== TOAST ===== -->
+    <div class="toast" id="toast"></div>
+
+    <!-- ===== JavaScript ===== -->
+    <script>
+        (function() {
+            // ============================================================
+            // 1. ИНИЦИАЛИЗАЦИЯ TELEGRAM WEBAPP
+            // ============================================================
+            const tg = window.Telegram.WebApp;
+            tg.ready();
+            tg.expand();
+
+            // ============================================================
+            // 2. ДАННЫЕ ПОЛЬЗОВАТЕЛЯ
+            // ============================================================
+            const user = tg.initDataUnsafe?.user || null;
+            const userId = user?.id || '—';
+            const username = user?.username || 'User';
+
+            document.getElementById('userId').textContent = userId;
+
+            // ============================================================
+            // 3. СОСТОЯНИЕ
+            // ============================================================
+            const state = {
+                balance: 0,
+                withdrawn: 0,
+                miningActive: false,
+                miningStarted: 0,
+                miningEarned: 0,
+                miningSpeed: 135,
+                iron: 0,
+                gold: 0,
+                diamond: 0,
+                matter: 0,
+                fish: { perch: 0, trout: 0, fugu: 0, salmon: 0, shark: 0, whale: 0 },
+                refs: [],
+                refsTotal: 0,
+                refsEarned: 0,
+                refsReward: 1000,
+                refsPercent: 20,
+                fishingCooldown: 90,
+                lastFishing: 0,
+                elo: 0,
+                isMining: false,
+                miningInterval: null
+            };
+
+            // ============================================================
+            // 4. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+            // ============================================================
+            function showToast(msg, duration = 2500) {
+                const el = document.getElementById('toast');
+                el.textContent = msg;
+                el.classList.add('show');
+                clearTimeout(el._hide);
+                el._hide = setTimeout(() => el.classList.remove('show'), duration);
+            }
+
+            function formatTime(seconds) {
+                if (seconds < 0) return '0ч 0м';
+                const h = Math.floor(seconds / 3600);
+                const m = Math.floor((seconds % 3600) / 60);
+                return `${h}ч ${m}м`;
+            }
+
+            function formatNumber(n) {
+                return Number(n).toFixed(2);
+            }
+
+            // ============================================================
+            // 5. API ВЫЗОВЫ (к боту через WebApp)
+            // ============================================================
+            function callBot(action, data = {}) {
+                return new Promise((resolve, reject) => {
+                    const payload = {
+                        ...data,
+                        userId: userId,
+                        action: action
+                    };
+                    // Отправляем данные в бот через sendData
+                    try {
+                        tg.sendData(JSON.stringify(payload));
+                        // Ответ придёт через onEvent
+                        resolve({ success: true });
+                    } catch (e) {
+                        reject(e);
+                    }
+                });
+            }
+
+            // Обработчик сообщений от бота
+            tg.onEvent('message', (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.success) {
+                        // Обновляем состояние
+                        if (data.balance !== undefined) state.balance = data.balance;
+                        if (data.withdrawn !== undefined) state.withdrawn = data.withdrawn;
+                        if (data.miningActive !== undefined) state.miningActive = data.miningActive;
+                        if (data.miningEarned !== undefined) state.miningEarned = data.miningEarned;
+                        if (data.miningStarted !== undefined) state.miningStarted = data.miningStarted;
+                        if (data.iron !== undefined) state.iron = data.iron;
+                        if (data.gold !== undefined) state.gold = data.gold;
+                        if (data.diamond !== undefined) state.diamond = data.diamond;
+                        if (data.matter !== undefined) state.matter = data.matter;
+                        if (data.fish) Object.assign(state.fish, data.fish);
+                        if (data.refs) state.refs = data.refs;
+                        if (data.refsTotal !== undefined) state.refsTotal = data.refsTotal;
+                        if (data.refsEarned !== undefined) state.refsEarned = data.refsEarned;
+                        if (data.elo !== undefined) state.elo = data.elo;
+                        if (data.lastFishing !== undefined) state.lastFishing = data.lastFishing;
+
+                        updateUI();
+                        if (data.message) showToast(data.message);
+                    } else {
+                        if (data.message) showToast('❌ ' + data.message);
+                    }
+                } catch (e) {
+                    console.error('Ошибка обработки сообщения:', e);
+                }
+            });
+
+            // ============================================================
+            // 6. ОБНОВЛЕНИЕ UI
+            // ============================================================
+            function updateUI() {
+                // Баланс
+                document.getElementById('balance').textContent = Math.floor(state.balance);
+                document.getElementById('withdrawn').textContent = Math.floor(state.withdrawn);
+
+                // Майнинг
+                const miningState = document.getElementById('miningState');
+                if (state.miningActive) {
+                    miningState.textContent = '🟢 Активен';
+                    miningState.style.color = '#2ecc71';
+                } else {
+                    miningState.textContent = '❌ Остановлен';
+                    miningState.style.color = '#e74c3c';
+                }
+                document.getElementById('miningSpeed').textContent = `${state.miningSpeed} CABS/час`;
+                document.getElementById('miningEarned').textContent = `${formatNumber(state.miningEarned)} CABS`;
+
+                if (state.miningActive && state.miningStarted > 0) {
+                    const elapsed = Math.floor((Date.now() / 1000) - state.miningStarted);
+                    document.getElementById('miningTime').textContent = formatTime(elapsed);
+                } else {
+                    document.getElementById('miningTime').textContent = '0ч 0м';
+                }
+
+                // Ресурсы
+                document.getElementById('resIron').textContent = state.iron;
+                document.getElementById('resGold').textContent = state.gold;
+                document.getElementById('resDiamond').textContent = state.diamond;
+                document.getElementById('resMatter').textContent = state.matter;
+
+                // Рыба
+                document.getElementById('fishPerch').textContent = state.fish.perch || 0;
+                document.getElementById('fishTrout').textContent = state.fish.trout || 0;
+                document.getElementById('fishFugu').textContent = state.fish.fugu || 0;
+                document.getElementById('fishSalmon').textContent = state.fish.salmon || 0;
+                document.getElementById('fishShark').textContent = state.fish.shark || 0;
+                document.getElementById('fishWhale').textContent = state.fish.whale || 0;
+
+                // Общее количество рыбы
+                const totalFish = Object.values(state.fish).reduce((a, b) => a + b, 0);
+                document.getElementById('fishCount').textContent = totalFish;
+
+                // Рыбалка кулдаун
+                document.getElementById('fishingCooldown').textContent = `${state.fishingCooldown} мин`;
+                if (state.lastFishing > 0) {
+                    const elapsed = (Date.now() / 1000) - state.lastFishing;
+                    const cooldownSec = state.fishingCooldown * 60;
+                    if (elapsed < cooldownSec) {
+                        const remaining = Math.floor(cooldownSec - elapsed);
+                        const m = Math.floor(remaining / 60);
+                        const s = remaining % 60;
+                        document.getElementById('fishingNext').textContent = `${m}м ${s}с`;
+                    } else {
+                        document.getElementById('fishingNext').textContent = '✅ Готово!';
+                    }
+                } else {
+                    document.getElementById('fishingNext').textContent = '✅ Готово!';
+                }
+
+                // Рефералы
+                document.getElementById('refsTotal').textContent = state.refsTotal;
+                document.getElementById('refsEarned').textContent = `${Math.floor(state.refsEarned)} CABS`;
+                document.getElementById('refsReward').textContent = `${state.refsReward} CABS`;
+                document.getElementById('refsPercent').textContent = `${state.refsPercent}%`;
+
+                // Ссылка
+                const botName = 'cabsminingbot';
+                document.getElementById('refLink').textContent = `https://t.me/${botName}?start=ref_${userId}`;
+
+                // Список рефералов
+                const refsList = document.getElementById('refsList');
+                if (state.refs && state.refs.length > 0) {
+                    refsList.innerHTML = state.refs.map(r =>
+                        `• @${r.username || 'User'} — ${Math.floor(r.earned || 0)} CABS`
+                    ).join('<br>');
+                } else {
+                    refsList.textContent = 'У вас пока нет рефералов';
+                }
+
+                // Статистика
+                document.getElementById('miningStat').textContent = state.miningActive ? '🟢' : '⏸';
+                document.getElementById('refsStat').textContent = state.refsTotal;
+                document.getElementById('eloStat').textContent = state.elo || 0;
+            }
+
+            // ============================================================
+            // 7. ЗАГРУЗКА ДАННЫХ
+            // ============================================================
+            function loadData() {
+                callBot('get_data').catch(() => {
+                    // Если бот не отвечает — показываем демо-данные
+                    state.balance = 1250;
+                    state.withdrawn = 5000;
+                    state.miningActive = false;
+                    state.miningEarned = 0;
+                    state.iron = 45;
+                    state.gold = 12;
+                    state.diamond = 3;
+                    state.matter = 1;
+                    state.fish = { perch: 5, trout: 3, fugu: 1, salmon: 0, shark: 0, whale: 0 };
+                    state.refsTotal = 15;
+                    state.refsEarned = 2450;
+                    state.elo = 120;
+                    state.lastFishing = 0;
+                    updateUI();
+                });
+            }
+
+            // ============================================================
+            // 8. ОБРАБОТЧИКИ СОБЫТИЙ
+            // ============================================================
+
+            // --- ТАБЫ ---
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    this.classList.add('active');
+                    document.getElementById(this.dataset.tab).classList.add('active');
+                });
+            });
+
+            // --- МАЙНИНГ СТАРТ ---
+            document.getElementById('miningStartBtn').addEventListener('click', function() {
+                if (state.miningActive) {
+                    showToast('❌ Майнинг уже активен');
+                    return;
+                }
+                callBot('mining_start').catch(() => {
+                    // Демо-режим
+                    state.miningActive = true;
+                    state.miningStarted = Date.now() / 1000;
+                    state.miningEarned = 0;
+                    updateUI();
+                    showToast('✅ Майнинг запущен!');
+                });
+            });
+
+            // --- МАЙНИНГ СТОП ---
+            document.getElementById('miningStopBtn').addEventListener('click', function() {
+                if (!state.miningActive) {
+                    showToast('❌ Майнинг не активен');
+                    return;
+                }
+                callBot('mining_stop').catch(() => {
+                    // Демо-режим
+                    const earned = state.miningEarned || 125.5;
+                    state.balance += earned;
+                    state.miningActive = false;
+                    state.miningEarned = 0;
+                    updateUI();
+                    showToast(`✅ Майнинг остановлен! +${Math.floor(earned)} CABS`);
+                });
+            });
+
+            // --- КОПКА РЕСУРСОВ ---
+            function mineResource(res, name) {
+                callBot('mine', { resource: res }).catch(() => {
+                    // Демо-режим
+                    const amounts = { iron: 7, gold: 5, diamond: 3, matter: 2 };
+                    const xp = { iron: 1, gold: 2, diamond: 3, matter: 5 };
+                    const amt = Math.floor(Math.random() * amounts[res]) + 3;
+                    state[res] = (state[res] || 0) + amt;
+                    showToast(`📦 Добыто: +${amt} ${name}`);
+                    updateUI();
+                });
+            }
+
+            document.getElementById('mineIronBtn').addEventListener('click', () => mineResource('iron', 'железо'));
+            document.getElementById('mineGoldBtn').addEventListener('click', () => mineResource('gold', 'золото'));
+            document.getElementById('mineDiamondBtn').addEventListener('click', () => mineResource('diamond', 'алмазы'));
+            document.getElementById('mineMatterBtn').addEventListener('click', () => mineResource('matter', 'материя'));
+
+            // --- РЫБАЛКА ---
+            document.getElementById('fishCastBtn').addEventListener('click', function() {
+                const cooldownSec = state.fishingCooldown * 60;
+                if (state.lastFishing > 0 && (Date.now() / 1000) - state.lastFishing < cooldownSec) {
+                    const remaining = Math.floor(cooldownSec - ((Date.now() / 1000) - state.lastFishing));
+                    const m = Math.floor(remaining / 60);
+                    const s = remaining % 60;
+                    showToast(`⏳ Ждите ${m}м ${s}с`);
+                    return;
+                }
+
+                callBot('fish_cast').catch(() => {
+                    // Демо-режим
+                    const fishList = ['perch', 'trout', 'fugu', 'salmon', 'shark', 'whale'];
+                    const fishNames = ['Окунь', 'Форель', 'Фугу', 'Лосось', 'Акула', 'Кит'];
+                    const idx = Math.floor(Math.random() * fishList.length);
+                    const key = fishList[idx];
+                    state.fish[key] = (state.fish[key] || 0) + 1;
+                    state.lastFishing = Date.now() / 1000;
+                    showToast(`🎣 Вы поймали: ${fishNames[idx]}!`);
+                    updateUI();
+                });
+            });
+
+            // --- ПРОДАЖА РЫБЫ ---
+            document.getElementById('sellFishBtn').addEventListener('click', function() {
+                const total = Object.values(state.fish).reduce((a, b) => a + b, 0);
+                if (total === 0) {
+                    showToast('❌ Нет рыбы для продажи');
+                    return;
+                }
+                callBot('sell_fish').catch(() => {
+                    // Демо-режим
+                    const prices = { perch: 200, trout: 400, fugu: 800, salmon: 1500, shark: 3000, whale: 5000 };
+                    let earned = 0;
+                    for (const [key, count] of Object.entries(state.fish)) {
+                        earned += count * (prices[key] || 0);
+                    }
+                    state.balance += earned;
+                    state.fish = { perch: 0, trout: 0, fugu: 0, salmon: 0, shark: 0, whale: 0 };
+                    showToast(`💰 Продано! +${Math.floor(earned)} CABS`);
+                    updateUI();
+                });
+            });
+
+            // --- КОПИРОВАНИЕ ССЫЛКИ ---
+            document.getElementById('copyRefBtn').addEventListener('click', function() {
+                const link = document.getElementById('refLink').textContent;
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(link).then(() => {
+                        showToast('✅ Ссылка скопирована!');
+                    }).catch(() => {
+                        showToast('📋 Ссылка: ' + link);
+                    });
+                } else {
+                    showToast('📋 Ссылка: ' + link);
+                }
+            });
+
+            // --- ОБНОВИТЬ ---
+            document.getElementById('refreshBtn').addEventListener('click', function() {
+                loadData();
+                showToast('🔄 Обновлено');
+            });
+
+            // --- ЗАКРЫТЬ ---
+            document.getElementById('closeBtn').addEventListener('click', function() {
+                tg.close();
+            });
+
+            // ============================================================
+            // 9. АВТО-ОБНОВЛЕНИЕ МАЙНИНГА
+            // ============================================================
+            setInterval(() => {
+                if (state.miningActive) {
+                    const elapsed = (Date.now() / 1000) - state.miningStarted;
+                    state.miningEarned = (elapsed / 3600) * state.miningSpeed;
+                    updateUI();
+                }
+            }, 1000);
+
+            // ============================================================
+            // 10. СТАРТ
+            // ============================================================
+            loadData();
+            showToast('🪙 Добро пожаловать в CABS Miner!', 2000);
+
+        })();
+    </script>
+
+</body>
+</html>
